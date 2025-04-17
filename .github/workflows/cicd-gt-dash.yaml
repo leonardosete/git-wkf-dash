@@ -89,9 +89,13 @@ jobs:
           echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
 
       - name: 🧩 Aplica o Application do ArgoCD
-        run: kubectl apply -f argo-apps/gt-dash.yaml -n argocd
+        run: |
+          cd repo-auth
+          kubectl apply -f argo-apps/gt-dash.yaml -n argocd
 
       - name: 🔁 Força sync no ArgoCD
         run: |
+          cd repo-auth
           kubectl -n argocd patch application gt-dash \
             --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
+
