@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>GT Dash – Workflows</title>
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans transition-colors duration-300">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-indigo-700 to-purple-700 p-4 shadow flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <span class="text-white text-2xl">🚀</span>
+      <h1 class="text-2xl font-semibold text-white">GT-Dash</h1>
+    </div>
+    <button id="theme-toggle" class="text-white text-xl" title="Alternar tema">🌚</button>
+  </header>
+
+  <!-- Conteúdo principal -->
+  <main class="p-6 max-w-7xl mx-auto">
+    <!-- Dropdown de atualização -->
+    <div class="flex justify-end items-center gap-2 my-4 text-sm text-gray-600 dark:text-gray-300">
+      <label for="refresh-select">Atualizar automaticamente:</label>
+      <select id="refresh-select" class="bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white rounded px-2 py-1">
+        <option value="0" selected>Não atualizar</option>
+        <option value="10000">A cada 10s</option>
+        <option value="30000">A cada 30s</option>
+        <option value="60000">A cada 60s</option>
+      </select>
+    </div>
+
+    <!-- Área dos workflows -->
+    <div id="workflow-list">
+      <p class="text-gray-500">Carregando...</p>
+    </div>
+  </main>
+
+  <script>
+    const refreshSelect = document.getElementById('refresh-select');
+    const themeToggle = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+    let refreshInterval = null;
+
+    function loadWorkflows() {
+      const repo = document.querySelector('[name="repo"]')?.value || "";
+      const status = document.querySelector('[name="status"]')?.value || "";
+
+      const params = new URLSearchParams({
+        ...(repo && { repo }),
+        ...(status && { status }),
+      });
+
+      htmx.ajax('GET', `/workflows?${params.toString()}`, {
+        target: '#workflow-list',
+        swap: 'innerHTML'
+      });
+    }
+
+    function setRefresh(interval) {
+      if (refreshInterval) clearInterval(refreshInterval);
+      if (interval > 0) {
+        refreshInterval = setInterval(loadWorkflows, interval);
+      }
+    }
+
+    refreshSelect.addEventListener('change', () => {
+      setRefresh(Number(refreshSelect.value));
+    });
+
+    // Tema
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    if (currentTheme === 'dark') {
+      root.classList.add('dark');
+      themeToggle.textContent = '🌞';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      if (root.classList.contains('dark')) {
+        root.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        themeToggle.textContent = '🌚';
+      } else {
+        root.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        themeToggle.textContent = '🌞';
+      }
+    });
+
+    // Carrega uma vez ao abrir
+    loadWorkflows();
+  </script>
+</body>
+</html>

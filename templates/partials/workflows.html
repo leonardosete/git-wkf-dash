@@ -1,0 +1,93 @@
+<div class="flex flex-col lg:flex-row">
+  <aside class="w-full lg:w-64 mb-6 lg:mb-0 lg:mr-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+    <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">📊 GT-Dash</h2>
+    <nav class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+      <a href="#" class="block hover:text-indigo-600 dark:hover:text-white">📋 Painel Principal</a>
+      <a href="#" class="block hover:text-indigo-600 dark:hover:text-white">🚀 Workflows</a>
+      <a href="#" class="block hover:text-indigo-600 dark:hover:text-white">📁 Repositórios</a>
+      <a href="#" class="block hover:text-indigo-600 dark:hover:text-white">📈 Métricas</a>
+    </nav>
+  </aside>
+
+  <section class="flex-1">
+    <form class="flex flex-wrap gap-4 items-end mb-6" method="get">
+      <div>
+        <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Repositório</label>
+        <select name="repo" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white rounded px-2 py-1">
+          <option value="">Todos</option>
+          {% for repo in repos %}
+            <option value="{{ repo }}" {% if repo == selected_repo %}selected{% endif %}>{{ repo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Status</label>
+        <select name="status" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white rounded px-2 py-1">
+          <option value="">Todos</option>
+          <option value="success" {% if selected_status == 'success' %}selected{% endif %}>Sucesso</option>
+          <option value="failure" {% if selected_status == 'failure' %}selected{% endif %}>Falha</option>
+          <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>Em andamento</option>
+        </select>
+      </div>
+      <div>
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition">Aplicar</button>
+      </div>
+    </form>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl shadow text-center text-gray-900 dark:text-white">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Execuções</p>
+        <p class="text-2xl font-bold">{{ total_runs }}</p>
+      </div>
+      <div class="bg-green-600 p-4 rounded-xl shadow text-center text-white">
+        <p class="text-sm">Sucessos</p>
+        <p class="text-2xl font-bold">{{ total_success }}</p>
+      </div>
+      <div class="bg-red-600 p-4 rounded-xl shadow text-center text-white">
+        <p class="text-sm">Falhas</p>
+        <p class="text-2xl font-bold">{{ total_failure }}</p>
+      </div>
+      <div class="bg-blue-600 p-4 rounded-xl shadow text-center text-white">
+        <p class="text-sm">Em andamento</p>
+        <p class="text-2xl font-bold">{{ total_in_progress }}</p>
+      </div>
+    </div>
+
+    {% for repo, info in grouped.items() %}
+      <div class="mb-6">
+        <div class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl shadow-md p-4">
+          <div class="flex justify-between items-center mb-2">
+            <strong>{{ repo }}</strong>
+            <span>
+              ✅ {{ info.counts.success }} /
+              ❌ {{ info.counts.failure }} /
+              🟦 {{ info.counts.in_progress }}
+            </span>
+          </div>
+
+          {% for wf in info["items"][:6] %}
+            <div class="mb-2 border border-gray-300 dark:border-gray-700 rounded p-3 bg-white dark:bg-gray-900">
+              <p class="font-medium text-sm mb-1">{{ wf.name or wf.workflow }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">{{ wf.created_at }}</p>
+              <p class="text-xs mt-1">
+                Status:
+                {% if wf.status == 'success' %}
+                  <span class="bg-green-200 dark:bg-green-600 text-green-900 dark:text-white px-2 py-0.5 rounded text-xs">Sucesso</span>
+                {% elif wf.status == 'failure' %}
+                  <span class="bg-red-200 dark:bg-red-600 text-red-900 dark:text-white px-2 py-0.5 rounded text-xs">Falha</span>
+                {% elif wf.status == 'in_progress' %}
+                  <span class="bg-blue-200 dark:bg-blue-600 text-blue-900 dark:text-white px-2 py-0.5 rounded text-xs">Em andamento</span>
+                {% elif wf.status == 'queued' %}
+                  <span class="bg-yellow-200 dark:bg-yellow-600 text-yellow-900 dark:text-white px-2 py-0.5 rounded text-xs">Fila</span>
+                {% else %}
+                  <span class="bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white px-2 py-0.5 rounded text-xs">Outro</span>
+                {% endif %}
+              </p>
+              <a href="{{ wf.html_url }}" target="_blank" class="text-xs text-blue-700 dark:text-blue-400 underline">Ver no GitHub</a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+</div>
