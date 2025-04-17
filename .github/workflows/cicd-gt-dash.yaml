@@ -76,7 +76,7 @@ jobs:
         env:
           GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
         run: |
-          git clone https://x-access-token:${GH_PUSH_TOKEN}@github.com/${{ github.repository }} repo-auth
+          git clone --branch develop https://x-access-token:${GH_PUSH_TOKEN}@github.com/${{ github.repository }} repo-auth
           cd repo-auth
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
