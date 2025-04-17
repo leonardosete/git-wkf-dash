@@ -6,7 +6,7 @@ on:
     paths:
       - "Dockerfile"
       - "src/**"
-      - ".github/workflows/deploy-gt-dash.yaml"
+      - ".github/workflows/cicd-gt-dash.yaml"
       - "apps/gt-dash/**"
   workflow_dispatch:
 
