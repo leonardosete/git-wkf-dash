@@ -3,12 +3,16 @@ kind: Application
 metadata:
   name: gt-dash
   namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: sevenleo/github-dashboard
+    argocd-image-updater.argoproj.io/sevenleo.github-dashboard.update-strategy: latest
+    argocd-image-updater.argoproj.io/sevenleo.github-dashboard.helm.values: image.tag
 spec:
   project: default
   source:
     repoURL: https://github.com/leonardosete/git-wkf-dash.git
     targetRevision: HEAD
-    path: apps/gt-dash
+    path: infra/helm-charts/gt-dash
     helm:
       valueFiles:
         - values.yaml
