@@ -62,12 +62,15 @@ jobs:
           sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" apps/gt-dash/values.yaml
 
       - name: ✅ Commita o novo values.yaml
+        env:
+          GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add apps/gt-dash/values.yaml
-          git commit -m "🚀 Atualiza imagem do gt-dash para tag ${{ needs.build-and-push.outputs.image_tag }}"
-          git push
+          git commit -m "🚀 Atualiza imagem do gt-dash para tag ${{ needs.build-and-push.outputs.image_tag }}" || echo "Nada para commitar"
+          git remote set-url origin https://x-access-token:${GH_PUSH_TOKEN}@github.com/${{ github.repository }}
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: 🔐 Cria ~/.kube/config
         run: |
