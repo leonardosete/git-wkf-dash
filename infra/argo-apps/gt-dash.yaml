@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/leonardosete/git-wkf-dash.git
-    targetRevision: HEAD
+    targetRevision: develop
     path: infra/helm-charts/gt-dash
     helm:
       valueFiles:
