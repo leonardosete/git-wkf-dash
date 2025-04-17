@@ -3,16 +3,31 @@ name: CI/CD - Build e Deploy GT-Dash
 on:
   push:
     branches: [develop]
-    paths:
-      - "Dockerfile"
-      - "src/**"
-      - ".github/workflows/cicd-gt-dash.yaml"
-      - "apps/gt-dash/**"
   workflow_dispatch:
 
 jobs:
+  check-changes:
+    name: 🔍 Verifica se build é necessário
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.changed }}
+    steps:
+      - name: 📦 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: 🧠 Verifica se Dockerfile ou src/ foram alterados
+        id: check
+        run: |
+          echo "changed=false" >> $GITHUB_OUTPUT
+          git fetch origin develop
+          if git diff --name-only origin/develop HEAD | grep -E 'Dockerfile|^src/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
   build-and-push:
     name: 🛠️ Build & Push Docker Image
+    needs: check-changes
+    if: needs.check-changes.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta.outputs.version }}
@@ -21,7 +36,7 @@ jobs:
       - name: 📦 Checkout do código
         uses: actions/checkout@v4
 
-      - name: 🏷️ Gerar metadados de versão
+      - name: 🏷️ Metadados da imagem
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -37,7 +52,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 🏗️ Build e Push da Imagem
+      - name: 🛠️ Build e Push da Imagem
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -48,19 +63,11 @@ jobs:
 
   update-values-and-deploy:
     name: 🚀 Atualiza values.yaml e Deploy ArgoCD
+    needs: [check-changes, build-and-push]
     runs-on: ubuntu-latest
-    needs: build-and-push
+    if: always()  # sempre roda, mesmo se o build foi pulado
 
     steps:
-      - name: 📦 Checkout do código
-        uses: actions/checkout@v4
-
-      - name: 🔧 Atualiza tag no values.yaml
-        run: |
-          IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}"
-          echo "🔁 Substituindo tag da imagem por $IMAGE_TAG"
-          sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" apps/gt-dash/values.yaml
-
       - name: 🔁 Clona repositório autenticado com PAT
         env:
           GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
@@ -69,12 +76,14 @@ jobs:
           cd repo-auth
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          sed -i "s/tag: .*/tag: ${{ needs.build-and-push.outputs.image_tag }}/" apps/gt-dash/values.yaml
+          IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag || 'latest' }}"
+          sed -i "s/tag: .*/tag: $IMAGE_TAG/" apps/gt-dash/values.yaml
           git add apps/gt-dash/values.yaml
-          git commit -m "🚀 Atualiza imagem do gt-dash para tag ${{ needs.build-and-push.outputs.image_tag }}" || echo "Nada para commitar"
+          git commit -m "🚀 Atualiza imagem do gt-dash para tag $IMAGE_TAG" || echo "Nada para commitar"
+          git pull --rebase origin develop
           git push origin HEAD:develop
 
-      - name: 🔐 Cria ~/.kube/config
+      - name: 🔐 kubeconfig
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
