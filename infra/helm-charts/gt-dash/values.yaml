@@ -4,8 +4,8 @@ gt_dash:
   domain_name: gt-dash-sete.devops-master.shop
   replicaCount: 1
   image:
-    repository: sevenleo/github-dashboard
-    tag: latest
+    repository: sevenleo/git-wkf-dash
+    tag: develop
     pullPolicy: IfNotPresent
   service:
     port: 8000

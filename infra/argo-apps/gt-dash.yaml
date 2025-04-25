@@ -4,7 +4,7 @@ metadata:
   name: gt-dash
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/image-list: sevenleo/github-dashboard
+    argocd-image-updater.argoproj.io/image-list: sevenleo/git-wkf-dash
     argocd-image-updater.argoproj.io/sevenleo.github-dashboard.update-strategy: latest
     argocd-image-updater.argoproj.io/sevenleo.github-dashboard.helm.values: image.tag
 spec:
