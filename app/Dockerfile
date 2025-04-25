@@ -3,13 +3,15 @@ FROM node:20 AS frontend
 
 WORKDIR /app
 
-COPY package.json ./
+# Copiar arquivos de dependência
+COPY package.json package-lock.json ./
 RUN npm install
 
-# ⬇️ Corrigido: copia tudo, incluindo index.html
+# Copiar os arquivos restantes
 COPY . .
 
-RUN pnpm run build
+# Build do frontend
+RUN npm run build
 
 # Etapa 2: Backend com Streamlit
 FROM python:3.11-slim

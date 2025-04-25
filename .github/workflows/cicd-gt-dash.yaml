@@ -70,8 +70,6 @@ jobs:
 #    needs: [check-changes, build-and-push]
     needs: [build-and-push]
     runs-on: ubuntu-latest
-    if: always()  # sempre roda, mesmo se o build foi pulado
-
     steps:
       - name: 🔁 Clona repositório autenticado com PAT
         env:
