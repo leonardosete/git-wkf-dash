@@ -95,9 +95,13 @@ try:
     ])
     fig_repo.update_layout(barmode='group', title="Repository Metrics")
     st.plotly_chart(fig_repo, use_container_width=True)
-    
+
     # Recent Workflow Runs Table
     st.subheader("Recent Workflow Runs")
+
+    # ✅ Formatar a coluna started_at no timezone correto
+    df_filtered['started_at'] = df_filtered['started_at'].dt.strftime('%d/%m/%Y %H:%M:%S')
+
     st.dataframe(
         df_filtered[['repository', 'workflow_name', 'status', 'started_at', 'duration_minutes']]
         .sort_values('started_at', ascending=False)
