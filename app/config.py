@@ -1,5 +1,8 @@
 # config.py
 import os  # ✅ necessário para usar os.getenv
+os.environ['TZ'] = 'America/Sao_Paulo'
+import time
+time.tzset()
 
 # GitHub API token via variável de ambiente
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -11,7 +14,6 @@ if not GITHUB_TOKEN:
 DEFAULT_REPOS = [
     "leonardosete/kind-cluster-n8n",
     "leonardosete/teste-ricardinho-origem",
-    "leonardosete/my-idp",
     "leonardosete/git-wkf-dash",
     "leonardosete/teste-workflow"
 ]

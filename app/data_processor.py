@@ -9,8 +9,10 @@ class DataProcessor:
         df = pd.DataFrame(runs)
         
         # Convert timestamps to datetime
-        df['started_at'] = pd.to_datetime(df['started_at'])
-        df['updated_at'] = pd.to_datetime(df['updated_at'])
+        df['started_at'] = pd.to_datetime(df['started_at']).dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
+        df['updated_at'] = pd.to_datetime(df['updated_at']).dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
+        cutoff_date = datetime.now(pytz.timezone("America/Sao_Paulo")) - timedelta(days=days_filter)
+
         
         # Calculate duration in minutes
         df['duration_minutes'] = (df['updated_at'] - df['started_at']).dt.total_seconds() / 60
