@@ -10,28 +10,28 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-changes:
-    name: 🔍 Verifica se build é necessário
-    runs-on: ubuntu-latest
-    outputs:
-      should_build: ${{ steps.check.outputs.changed }}
-    steps:
-      - name: 📦 Checkout do código
-        uses: actions/checkout@v4
+  # check-changes:
+  #   name: 🔍 Verifica se build é necessário
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     should_build: ${{ steps.check.outputs.changed }}
+  #   steps:
+  #     - name: 📦 Checkout do código
+  #       uses: actions/checkout@v4
 
-      - name: 🧠 Verifica se Dockerfile ou src/ foram alterados
-        id: check
-        run: |
-          echo "changed=false" >> $GITHUB_OUTPUT
-          git fetch origin develop
-          if git diff --name-only origin/develop HEAD | grep -E '^app/Dockerfile|^app/'; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
+  #     - name: 🧠 Verifica se Dockerfile ou src/ foram alterados
+  #       id: check
+  #       run: |
+  #         echo "changed=false" >> $GITHUB_OUTPUT
+  #         git fetch origin develop
+  #         if git diff --name-only origin/develop HEAD | grep -E '^app/Dockerfile|^app/'; then
+  #           echo "changed=true" >> $GITHUB_OUTPUT
+  #         fi
 
   build-and-push:
     name: 🛠️ Build & Push Docker Image
-    needs: check-changes
-    if: needs.check-changes.outputs.should_build == 'true'
+    # needs: check-changes
+    # if: needs.check-changes.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta.outputs.version }}
@@ -67,7 +67,8 @@ jobs:
 
   update-values-and-deploy:
     name: 🚀 Atualiza values.yaml e Deploy ArgoCD
-    needs: [check-changes, build-and-push]
+#    needs: [check-changes, build-and-push]
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     if: always()  # sempre roda, mesmo se o build foi pulado
 
