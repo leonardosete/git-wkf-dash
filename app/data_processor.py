@@ -1,36 +1,35 @@
 # data_processor.py
+
 import pandas as pd
 from datetime import datetime, timedelta
-import pytz  # ✅ Import necessário para timezone UTC
+import pytz  # ✅ Import necessário para timezone
 
 class DataProcessor:
     def process_workflow_runs(self, runs, days_filter):
-        """Process workflow runs data into a pandas DataFrame"""
+        """Process workflow runs data into um DataFrame pandas"""
         df = pd.DataFrame(runs)
         
-        # Convert timestamps to datetime
+        # Convertendo timestamps UTC -> America/Sao_Paulo
         df['started_at'] = pd.to_datetime(df['started_at']).dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
         df['updated_at'] = pd.to_datetime(df['updated_at']).dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
-        cutoff_date = datetime.now(pytz.timezone("America/Sao_Paulo")) - timedelta(days=days_filter)
 
-        
-        # Calculate duration in minutes
-        df['duration_minutes'] = (df['updated_at'] - df['started_at']).dt.total_seconds() / 60
-        
-        # ✅ Correção: usar datetime com timezone UTC
-        cutoff_date = datetime.now(pytz.UTC) - timedelta(days=days_filter)
+        # Data limite com timezone SP
+        cutoff_date = datetime.now(pytz.timezone("America/Sao_Paulo")) - timedelta(days=days_filter)
         df = df[df['started_at'] >= cutoff_date]
-        
-        # Clean up status
+
+        # Duração em minutos
+        df['duration_minutes'] = (df['updated_at'] - df['started_at']).dt.total_seconds() / 60
+
+        # Ajuste do status
         df['status'] = df.apply(
             lambda x: x['conclusion'] if x['status'] == 'completed' else x['status'],
             axis=1
         )
-        
+
         return df
-    
+
     def calculate_success_rate_trend(self, df):
-        """Calculate daily success rate trend"""
+        """Cálculo da taxa de sucesso diária"""
         df['date'] = df['started_at'].dt.date
         daily_stats = df.groupby('date').agg({
             'id': 'count',
@@ -39,9 +38,9 @@ class DataProcessor:
         
         daily_stats['success_rate'] = (daily_stats['status'] / daily_stats['id']) * 100
         return daily_stats
-    
+
     def calculate_repo_metrics(self, df):
-        """Calculate metrics per repository"""
+        """Cálculo de métricas por repositório"""
         repo_metrics = df.groupby('repository').agg({
             'id': 'count',
             'status': lambda x: (x == 'success').mean() * 100,
