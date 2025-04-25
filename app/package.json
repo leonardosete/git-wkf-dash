@@ -1,13 +1,17 @@
 {
   "name": "react-template",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint ./src --quiet",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite preview",
+    "lint": "eslint ./src --quiet"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -33,6 +37,11 @@
     "globals": "^15.9.0",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",
-    "vite": "^5.4.18"
-  }
+    "vite": "^6.3.3"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "not dead",
+    "> 0.5%"
+  ]
 }
