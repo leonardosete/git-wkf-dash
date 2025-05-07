@@ -1,77 +1,22 @@
-name: CI/CD - Full Build e Deploy GT-Dash
+name: CI/CD - Deploy GT-Dash via GitOps
 
 on:
-  push:
-    branches: [develop]
-    paths:
-      - 'app/**'
-      - 'infra/**'
-      - '.github/workflows/**'
+  # push:
+  #   branches: [develop]
+  #   paths:
+  #     - 'infra/helm-charts/gt-dash/**'
+  #     - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
-  # check-changes:
-  #   name: 🔍 Verifica se build é necessário
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     should_build: ${{ steps.check.outputs.changed }}
-  #   steps:
-  #     - name: 📦 Checkout do código
-  #       uses: actions/checkout@v4
-
-  #     - name: 🧠 Verifica se Dockerfile ou src/ foram alterados
-  #       id: check
-  #       run: |
-  #         echo "changed=false" >> $GITHUB_OUTPUT
-  #         git fetch origin develop
-  #         if git diff --name-only origin/develop HEAD | grep -E '^app/Dockerfile|^app/'; then
-  #           echo "changed=true" >> $GITHUB_OUTPUT
-  #         fi
-
-  build-and-push:
-    name: 🛠️ Build & Push Docker Image
-    # needs: check-changes
-    # if: needs.check-changes.outputs.should_build == 'true'
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.meta.outputs.version }}
+  update-values-and-deploy:
+    runs-on: [self-hosted]
 
     steps:
       - name: 📦 Checkout do código
         uses: actions/checkout@v4
 
-      - name: 🏷️ Metadados da imagem
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: docker.io/sevenleo/git-wkf-dash
-          tags: |
-            type=sha,format=short
-            type=ref,event=branch
-            type=raw,value=latest
-
-      - name: 🔐 Login no Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: 🛠️ Build e Push da Imagem
-        uses: docker/build-push-action@v5
-        with:
-          context: app
-          push: true
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  update-values-and-deploy:
-    name: 🚀 Atualiza values.yaml e Deploy ArgoCD
-#    needs: [check-changes, build-and-push]
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔁 Clona repositório autenticado com PAT
+      - name: 🔁 Clona repo com autenticação
         env:
           GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
         run: |
@@ -79,25 +24,18 @@ jobs:
           cd repo-auth
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}"
-          if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG="latest"; fi
-          sed -i "s/tag: .*/tag: $IMAGE_TAG/" infra/helm-charts/gt-dash/values.yaml
+
+          TAG="latest"
+          sed -i "s/tag: .*/tag: $TAG/" infra/helm-charts/gt-dash/values.yaml
+
           git add infra/helm-charts/gt-dash/values.yaml
-          git commit -m "🚀 Atualiza imagem do gt-dash para tag $IMAGE_TAG" || echo "Nada para commitar"
-          git pull --rebase origin develop
+          git commit -m "ci: update gt-dash tag → $TAG [skip ci]" || echo "No changes"
+          git pull origin develop --rebase
           git push origin HEAD:develop
 
-      - name: 🔐 kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
+      - name: 🔐 Usa kubeconfig local
+        run: echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
 
-      - name: 🧩 Aplica o Application do ArgoCD
-        working-directory: repo-auth
-        run: kubectl apply -f infra/argo-apps/gt-dash.yaml -n argocd
-
-      - name: 🔁 Força sync no ArgoCD
-        working-directory: repo-auth
+      - name: 🧩 Aplica Application do ArgoCD
         run: |
-          kubectl -n argocd patch application gt-dash \
-            --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
+          kubectl apply -f repo-auth/infra/argo-apps/gt-dash.yaml -n argocd
