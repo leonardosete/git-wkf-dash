@@ -1,4 +1,4 @@
-name: CI/CD - Build e Deploy GT-Dash
+name: CD - Deploy GT-Dash
 
 on:
   workflow_dispatch:

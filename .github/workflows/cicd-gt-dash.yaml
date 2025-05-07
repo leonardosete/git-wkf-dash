@@ -1,4 +1,4 @@
-name: CI/CD - Build e Deploy GT-Dash
+name: CI/CD - Full Build e Deploy GT-Dash
 
 on:
   push:
